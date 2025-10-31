@@ -25,17 +25,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => {
-  console.log('✅ Connected to MongoDB');
-  app.listen(PORT, () => {
-    console.log(`🚀 AegiSher server running on port ${PORT}`);
-    console.log(`📍 API available at http://localhost:${PORT}`);
-  });
-})
-.catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1); // Stop the app if DB connection fails
-});
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch((err) => console.error('❌ MongoDB connection error:', err));
 // Health check endpoint
 app.get('/', (req, res) => {
   res.json({
