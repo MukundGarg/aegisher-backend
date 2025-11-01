@@ -1,7 +1,7 @@
-// routes/trustedCircle.js — Trusted Circle Routes (final stable version)
+// routes/trustedCircle.js — Final Claude version (frontend-compatible)
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User"); // ✅ Only User model is needed
+const User = require("../models/User");
 
 // ==================================================
 // POST /api/trusted-circle/:userId/add — Add a trusted contact
@@ -15,11 +15,8 @@ router.post("/:userId/add", async (req, res) => {
     }
 
     const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Prevent duplicate entries
     const existing = user.trustedCircle.find(c => c.phone === phone);
     if (existing) {
       return res.status(400).json({ error: "Contact already exists" });
@@ -36,11 +33,7 @@ router.post("/:userId/add", async (req, res) => {
     user.trustedCircle.push(newContact);
     await user.save();
 
-    res.status(201).json({
-      success: true,
-      message: "Contact added successfully",
-      contact: user.trustedCircle[user.trustedCircle.length - 1]
-    });
+    res.status(201).json(user.trustedCircle); // ✅ return full updated array
   } catch (err) {
     res.status(500).json({ error: "Failed to add contact", message: err.message });
   }
@@ -54,34 +47,29 @@ router.get("/:userId", async (req, res) => {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // ✅ Return a plain array (so frontend .map() works)
-    res.json(user.trustedCircle);
+    res.json(user.trustedCircle); // ✅ return plain array
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch contacts", message: err.message });
   }
 });
 
 // ==================================================
-// DELETE /api/trusted-circle/:userId/:contactId — Remove a contact
+// DELETE /api/trusted-circle/:userId/:contactId — Remove contact
 // ==================================================
 router.delete("/:userId/:contactId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const index = user.trustedCircle.findIndex(
-      c => c._id.toString() === req.params.contactId
+    user.trustedCircle = user.trustedCircle.filter(
+      c => c._id.toString() !== req.params.contactId
     );
-    if (index === -1) {
-      return res.status(404).json({ error: "Contact not found" });
-    }
 
-    user.trustedCircle.splice(index, 1);
     await user.save();
 
-    res.json({ success: true, message: "Contact removed" });
+    res.json(user.trustedCircle); // ✅ return updated array again
   } catch (err) {
-    res.status(500).json({ error: "Failed to remove contact", message: err.message });
+    res.status(500).json({ error: "Failed to delete contact", message: err.message });
   }
 });
 
