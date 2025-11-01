@@ -52,7 +52,19 @@ const safetyReportSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-
+reportType: {
+  type: String,
+  enum: [
+    'lighting',
+    'crowding',
+    'incident',
+    'harassment',   // ✅ added
+    'unsafe area',  // ✅ added
+    'general',
+    'positive'
+  ],
+  default: 'general'
+},
 // Index for geospatial queries
 safetyReportSchema.index({ location: '2dsphere' });
 safetyReportSchema.index({ createdAt: -1 });
