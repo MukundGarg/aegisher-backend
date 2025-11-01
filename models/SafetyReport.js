@@ -9,7 +9,7 @@ const safetyReportSchema = new mongoose.Schema({
   location: {
     type: {
       type: String,
-      enum: ['Point'], // ✅ This "enum" is correct — inside an object
+      enum: ['Point'],
       default: 'Point'
     },
     coordinates: {
@@ -27,16 +27,7 @@ const safetyReportSchema = new mongoose.Schema({
   },
   reportType: {
     type: String,
-    enum: [
-      'lighting',
-      'crowding',
-      'incident',
-      'harassment',   // ✅ added new type
-      'unsafe area',  // ✅ added new type
-      'general',
-      'positive'
-    ],
-    default: 'general'
+    default: 'general' // ✅ Allow any text, no enum restriction
   },
   comment: {
     type: String,
@@ -44,8 +35,7 @@ const safetyReportSchema = new mongoose.Schema({
   },
   timeOfDay: {
     type: String,
-    enum: ['morning', 'afternoon', 'evening', 'night'], // ✅ no TypeScript enums here
-    required: true
+    required: true // ✅ No enum restriction now
   },
   verified: {
     type: Boolean,
