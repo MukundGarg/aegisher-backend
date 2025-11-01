@@ -1,6 +1,8 @@
 // server.js - Main Express Server for AegiSher
 require('dotenv').config();
-console.log("🧩 MONGODB_URI from env:", process.env.MONGODB_URI);
+console.log("🧩 Environment variables loaded:");
+console.log(Object.keys(process.env)); // will print all env vars
+console.log("MONGODB_URI =", process.env.MONGODB_URI);
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
