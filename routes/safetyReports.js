@@ -3,7 +3,9 @@ const express = require('express');
 const router = express.Router();
 const SafetyReport = require('../models/SafetyReport');
 
+// ==================================================
 // POST /api/safety-reports/submit - Submit a safety report
+// ==================================================
 router.post('/submit', async (req, res) => {
   try {
     const {
@@ -62,7 +64,9 @@ router.post('/submit', async (req, res) => {
   }
 });
 
+// ==================================================
 // GET /api/safety-reports/nearby - Get reports near a location
+// ==================================================
 router.get('/nearby', async (req, res) => {
   try {
     const { latitude, longitude, radius } = req.query;
@@ -106,7 +110,9 @@ router.get('/nearby', async (req, res) => {
   }
 });
 
+// ==================================================
 // GET /api/safety-reports/:reportId - Get a specific report
+// ==================================================
 router.get('/:reportId', async (req, res) => {
   try {
     const report = await SafetyReport.findById(req.params.reportId);
@@ -128,7 +134,9 @@ router.get('/:reportId', async (req, res) => {
   }
 });
 
+// ==================================================
 // PATCH /api/safety-reports/:reportId/upvote - Upvote a report
+// ==================================================
 router.patch('/:reportId/upvote', async (req, res) => {
   try {
     const report = await SafetyReport.findByIdAndUpdate(
@@ -155,7 +163,9 @@ router.patch('/:reportId/upvote', async (req, res) => {
   }
 });
 
+// ==================================================
 // GET /api/safety-reports/stats/summary - Get safety statistics
+// ==================================================
 router.get('/stats/summary', async (req, res) => {
   try {
     const totalReports = await SafetyReport.countDocuments();
@@ -195,18 +205,29 @@ router.get('/stats/summary', async (req, res) => {
   }
 });
 
-// ✅ Base route for health check (frontend connectivity test)
-router.get('/', (req, res) => {
+// ==================================================
+// ✅ FIXED: GET /api/safety-reports - Return all reports for frontend
+// ==================================================
+router.get('/', async (req, res) => {
+  try {
+    const reports = await SafetyReport.find().sort({ createdAt: -1 });
+    res.json(reports); // frontend expects an array
+  } catch (error) {
+    console.error('Error fetching safety reports:', error);
+    res.status(500).json({
+      error: 'Failed to fetch safety reports',
+      message: error.message
+    });
+  }
+});
+
+// ==================================================
+// OPTIONAL: Health check endpoint
+// ==================================================
+router.get('/status', (req, res) => {
   res.json({
     success: true,
-    message: 'Safety Reports API is working!',
-    availableEndpoints: [
-      'POST /api/safety-reports/submit',
-      'GET /api/safety-reports/nearby',
-      'GET /api/safety-reports/:reportId',
-      'PATCH /api/safety-reports/:reportId/upvote',
-      'GET /api/safety-reports/stats/summary'
-    ]
+    message: 'Safety Reports API is live and healthy!'
   });
 });
 
