@@ -9,7 +9,7 @@ const safetyReportSchema = new mongoose.Schema({
   location: {
     type: {
       type: String,
-      enum: ['Point'],
+      enum: ['Point'], // ✅ This "enum" is correct — inside an object
       default: 'Point'
     },
     coordinates: {
@@ -27,7 +27,15 @@ const safetyReportSchema = new mongoose.Schema({
   },
   reportType: {
     type: String,
-    enum: ['lighting', 'crowding', 'incident', 'general', 'positive'],
+    enum: [
+      'lighting',
+      'crowding',
+      'incident',
+      'harassment',   // ✅ added new type
+      'unsafe area',  // ✅ added new type
+      'general',
+      'positive'
+    ],
     default: 'general'
   },
   comment: {
@@ -36,7 +44,7 @@ const safetyReportSchema = new mongoose.Schema({
   },
   timeOfDay: {
     type: String,
-    enum: ['morning', 'afternoon', 'evening', 'night'],
+    enum: ['morning', 'afternoon', 'evening', 'night'], // ✅ no TypeScript enums here
     required: true
   },
   verified: {
@@ -52,19 +60,7 @@ const safetyReportSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-reportType: {
-  type: String,
-  enum: [
-    'lighting',
-    'crowding',
-    'incident',
-    'harassment',   // ✅ added
-    'unsafe area',  // ✅ added
-    'general',
-    'positive'
-  ],
-  default: 'general'
-},
+
 // Index for geospatial queries
 safetyReportSchema.index({ location: '2dsphere' });
 safetyReportSchema.index({ createdAt: -1 });
