@@ -3,10 +3,11 @@ const mongoose = require('mongoose');
 
 const sosSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User',
+  required: false, // ✅ allow guest users
+  default: null
+},
   location: {
     type: {
       type: String,
