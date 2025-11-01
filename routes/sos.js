@@ -1,6 +1,7 @@
 // routes/sos.js - SOS Emergency alert routes
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const SOS = require('../models/SOS');
 const User = require('../models/User');
 
@@ -8,8 +9,8 @@ const User = require('../models/User');
 const sendAlerts = async (user, sosAlert) => {
   console.log('\n🚨 SOS ALERT TRIGGERED! 🚨');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`User: ${user.name}`);
-  console.log(`Phone: ${user.phone}`);
+  console.log(`User: ${user?.name || 'Guest User'}`);
+  console.log(`Phone: ${user?.phone || 'N/A'}`);
   console.log(`Location: ${sosAlert.location.coordinates[1]}, ${sosAlert.location.coordinates[0]}`);
   console.log(`Trigger Method: ${sosAlert.triggerMethod}`);
   console.log(`Time: ${new Date().toLocaleString()}`);
@@ -17,45 +18,19 @@ const sendAlerts = async (user, sosAlert) => {
 
   const alerts = [];
 
-  // Send alerts to trusted circle
-  for (const contact of user.trustedCircle) {
-    console.log(`📱 Sending alert to: ${contact.name} (${contact.phone})`);
-    
-    // TODO: INTEGRATE REAL SMS/EMAIL HERE
-    // Uncomment below to use Twilio for real SMS
-    /*
-    const twilio = require('twilio');
-    const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    
-    try {
-      await client.messages.create({
-        body: `🚨 EMERGENCY! ${user.name} has triggered an SOS alert. Location: ${sosAlert.location.address || 'View map link'}. Please check on them immediately!`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: contact.phone
-      });
+  // Send alerts to trusted circle (simulated)
+  if (user && user.trustedCircle && user.trustedCircle.length > 0) {
+    for (const contact of user.trustedCircle) {
+      console.log(`📱 Sending alert to: ${contact.name} (${contact.phone})`);
       alerts.push({
         contactName: contact.name,
         contactPhone: contact.phone,
         sentAt: new Date(),
         status: 'sent'
       });
-    } catch (error) {
-      alerts.push({
-        contactName: contact.name,
-        contactPhone: contact.phone,
-        sentAt: new Date(),
-        status: 'failed'
-      });
     }
-    */
-
-    // Simulated alert
-    alerts.push({
-      contactName: contact.name,
-      contactPhone: contact.phone,
-      sentAt: new Date(),
-      status: 'sent'
-    });
+  } else {
+    console.log('⚠️ No trusted contacts found or guest user.');
   }
 
   return alerts;
@@ -66,21 +41,20 @@ router.post('/trigger', async (req, res) => {
   try {
     const { userId, latitude, longitude, address, triggerMethod } = req.body;
 
-    if (!userId || !latitude || !longitude) {
+    if (!latitude || !longitude) {
       return res.status(400).json({
-        error: 'Missing required fields: userId, latitude, longitude'
+        error: 'Missing required fields: latitude, longitude'
       });
     }
 
-    // Find user and verify
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    let user = null;
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId);
     }
 
     // Create SOS alert
     const sosAlert = new SOS({
-      userId: user._id,
+      userId: user ? user._id : null,
       location: {
         type: 'Point',
         coordinates: [longitude, latitude],
@@ -90,7 +64,7 @@ router.post('/trigger', async (req, res) => {
       status: 'active'
     });
 
-    // Send alerts to trusted circle
+    // Send alerts if user exists
     const alertResults = await sendAlerts(user, sosAlert);
     sosAlert.alertsSent = alertResults;
 
