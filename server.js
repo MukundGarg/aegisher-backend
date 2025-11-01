@@ -17,7 +17,12 @@ const dangerPredictionRoutes = require('./routes/dangerPrediction');
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: ['https://aegisher-frontend.vercel.app', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
