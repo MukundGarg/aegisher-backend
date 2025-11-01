@@ -52,12 +52,11 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
-app.use('/api/sos', sosRoutes);
-app.use('/api/trusted-circle', trustedCircleRoutes);
-app.use('/api/safety-reports', safetyReportsRoutes);
-app.use('/api/routes', routesRoutes);
-app.use('/api/danger-prediction', dangerPredictionRoutes);
+const safetyReportsRoutes = require('./routes/safetyReports');
+const extraFeatures = require('./routes/extraFeatures');
 
+app.use('/api/safety-reports', safetyReportsRoutes);
+app.use('/api', extraFeatures);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
