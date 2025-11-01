@@ -1,76 +1,73 @@
-// routes/trustedCircle.js — Final Claude version (frontend-compatible)
-const express = require("express");
-const router = express.Router();
-const User = require("../models/User");
+// ============================================================
+// ✅ TRUSTED CIRCLE SECTION (load, add, remove contacts)
+// ============================================================
 
-// ==================================================
-// POST /api/trusted-circle/:userId/add — Add a trusted contact
-// ==================================================
-router.post("/:userId/add", async (req, res) => {
+async function loadTrustedContacts() {
   try {
-    const { name, phone, relationship, isPrimary } = req.body;
+    const response = await fetch(`${API_BASE_URL}/trusted-circle/USER_ID_HERE`); // replace USER_ID_HERE if user login implemented
+    const data = await response.json();
 
-    if (!name || !phone) {
-      return res.status(400).json({ error: "Name and phone are required" });
+    // 🔧 Ensure we always get an array
+    const contacts = data.contacts || [];
+
+    const list = document.getElementById('trustedContactsList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (contacts.length === 0) {
+      list.innerHTML = `<p>No trusted contacts found.</p>`;
+      return;
     }
 
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    contacts.forEach(contact => {
+      const div = document.createElement('div');
+      div.classList.add('contact-item');
+      div.innerHTML = `
+        <p><strong>${contact.name}</strong> (${contact.relationship || 'N/A'})<br>
+        ${contact.phone}</p>
+        <button onclick="removeTrustedContact('${contact._id}')">Remove</button>
+      `;
+      list.appendChild(div);
+    });
+  } catch (error) {
+    console.error('Error loading contacts:', error);
+  }
+}
 
-    const existing = user.trustedCircle.find(c => c.phone === phone);
-    if (existing) {
-      return res.status(400).json({ error: "Contact already exists" });
+async function addTrustedContact(event) {
+  event.preventDefault();
+
+  const nameInput = document.getElementById('contactName');
+  const phoneInput = document.getElementById('contactPhone');
+  const relationshipInput = document.getElementById('contactRelationship');
+
+  // ✅ Prevent null errors
+  if (!nameInput || !phoneInput) {
+    alert('Form inputs missing. Please check contactName and contactPhone fields.');
+    return;
+  }
+
+  const newContact = {
+    name: nameInput.value.trim(),
+    phone: phoneInput.value.trim(),
+    relationship: relationshipInput?.value || 'friend'
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/trusted-circle/USER_ID_HERE/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newContact)
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      alert('Contact added successfully!');
+      loadTrustedContacts();
+    } else {
+      alert('Error: ' + (data.error || 'Failed to add contact'));
     }
-
-    const newContact = {
-      name,
-      phone,
-      relationship: relationship || "friend",
-      isPrimary: isPrimary || false,
-      addedAt: new Date()
-    };
-
-    user.trustedCircle.push(newContact);
-    await user.save();
-
-    res.status(201).json(user.trustedCircle); // ✅ return full updated array
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add contact", message: err.message });
+  } catch (error) {
+    console.error('Error adding contact:', error);
   }
-});
-
-// ==================================================
-// GET /api/trusted-circle/:userId — Get all trusted contacts
-// ==================================================
-router.get("/:userId", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    res.json(user.trustedCircle); // ✅ return plain array
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch contacts", message: err.message });
-  }
-});
-
-// ==================================================
-// DELETE /api/trusted-circle/:userId/:contactId — Remove contact
-// ==================================================
-router.delete("/:userId/:contactId", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    user.trustedCircle = user.trustedCircle.filter(
-      c => c._id.toString() !== req.params.contactId
-    );
-
-    await user.save();
-
-    res.json(user.trustedCircle); // ✅ return updated array again
-  } catch (err) {
-    res.status(500).json({ error: "Failed to delete contact", message: err.message });
-  }
-});
-
-module.exports = router;
+}
